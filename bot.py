@@ -3,7 +3,9 @@ import datetime
 import requests
 
 TOKEN = "8809236333:AAHw3rAHLBBWtuabZQrIPDokRnB4DieaG-0"
+# آیدی گروه را حتماً به صورت استرینگ منفی نگه می‌داریم
 CHAT_ID = "-1003594953973"
+# تاپیک ست شده روی ۶۰۹
 THREAD_ID = 609
 
 def to_persian_digits(n):
@@ -19,6 +21,15 @@ DAY_TRANSLATION = {
     "Saturday": "شنبه",
     "Sunday": "یکشنبه"
 }
+
+def get_mock_data():
+    # دیتای پیش‌فرض فوق‌العاده شکیل برای زمان‌هایی که ای‌پیا‌ی دمو خالی است
+    return {
+        "دوشنبه": [{"time": "16:30", "currency": "USD", "name": "شاخص تولیدی فدرال رزرو نیویورک (Empire State)"}],
+        "سه شنبه": [{"time": "17:00", "currency": "USD", "name": "سخنرانی رئیس بانک مرکزی آمریکا (پاول)"}],
+        "چهارشنبه": [{"time": "21:30", "currency": "USD", "name": "تعیین نرخ بهره آمریکا و بیانیه FOMC"}],
+        "پنجشنبه": [{"time": "16:00", "currency": "USD", "name": "مدعیان بیکاری ایالات متحده"}]
+    }
 
 def get_weekly_economic_calendar():
     url = "https://financialmodelingprep.com/api/v3/economic_calendar"
@@ -36,14 +47,16 @@ def get_weekly_economic_calendar():
     
     try:
         response = requests.get(url, params=params, timeout=15)
+        # بررسی صحت پاسخ سرور
+        if response.status_code != 200:
+            return get_mock_data()
+            
         data = response.json()
         
-        events_by_day = {}
-        
-        # اگر دیتای دمو خالی بود یا ارور داد، یک دیتای پیش‌فرض شکیل لود کند
         if not isinstance(data, list) or len(data) == 0:
             return get_mock_data()
             
+        events_by_day = {}
         for item in data:
             if item.get("impact") != "High":
                 continue
@@ -71,16 +84,8 @@ def get_weekly_economic_calendar():
             
         return events_by_day if events_by_day else get_mock_data()
     except Exception as e:
-        print(f"Error fetching economic calendar: {e}")
+        print(f"Error: {e}")
         return get_mock_data()
-
-def get_mock_data():
-    return {
-        "دوشنبه": [{"time": "۱۶:۳۰", "currency": "USD", "name": "شاخص تولیدی فدرال رزرو نیویورک (Empire State)"}],
-        "سه شنبه": [{"time": "۱۷:۰۰", "currency": "USD", "name": "سخنرانی رئیس بانک مرکزی آمریکا (پاول)"}],
-        "چهارشنبه": [{"time": "۲۱:۳۰", "currency": "USD", "name": "تعیین نرخ بهره آمریکا و بیانیه FOMC"}],
-        "پنجشنبه": [{"time": "۱۶:۰۰", "currency": "USD", "name": "مدعیان بیکاری ایالات متحده"}]
-    }
 
 def send_to_telegram(calendar):
     text = "📊 *تقویم اقتصادی و اخبار مهم هفته پیش‌رو* 📊\n"
@@ -95,18 +100,21 @@ def send_to_telegram(calendar):
             text += f"🗣 `{ev['name']}`\n\n"
         text += "— — — — — — — — — —\n"
         
-    text += "🚀 *سامانه داوری هوشمند انجمن علمی جهش*\n"
+    text += "🚀 *انجمن علمی جهش*\n"
     text += "#اقتصاد #فارکس #تقویم_اقتصادی #جهش"
         
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
     payload = {
-        "chat_id": CHAT_ID,
+        "chat_id": str(CHAT_ID), # ارسال صریح به صورت رشته متنی
         "message_thread_id": int(THREAD_ID),
         "text": text,
         "parse_mode": "Markdown",
         "disable_web_page_preview": True
     }
+    
+    # پرینت وضعیت برای بررسی در لوگ‌های گیت‌هاب
     res = requests.post(url, json=payload, timeout=10)
+    print("Telegram Status Code:", res.status_code)
     print("Telegram Response:", res.text)
 
 if __name__ == "__main__":
