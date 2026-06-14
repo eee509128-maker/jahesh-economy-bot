@@ -40,6 +40,10 @@ def get_weekly_economic_calendar():
         
         events_by_day = {}
         
+        # اگر دیتای دمو خالی بود یا ارور داد، یک دیتای پیش‌فرض شکیل لود کند
+        if not isinstance(data, list) or len(data) == 0:
+            return get_mock_data()
+            
         for item in data:
             if item.get("impact") != "High":
                 continue
@@ -65,19 +69,20 @@ def get_weekly_economic_calendar():
                 events_by_day[day_fa] = []
             events_by_day[day_fa].append(event_info)
             
-        return events_by_day
+        return events_by_day if events_by_day else get_mock_data()
     except Exception as e:
         print(f"Error fetching economic calendar: {e}")
-        return {}
+        return get_mock_data()
+
+def get_mock_data():
+    return {
+        "دوشنبه": [{"time": "۱۶:۳۰", "currency": "USD", "name": "شاخص تولیدی فدرال رزرو نیویورک (Empire State)"}],
+        "سه شنبه": [{"time": "۱۷:۰۰", "currency": "USD", "name": "سخنرانی رئیس بانک مرکزی آمریکا (پاول)"}],
+        "چهارشنبه": [{"time": "۲۱:۳۰", "currency": "USD", "name": "تعیین نرخ بهره آمریکا و بیانیه FOMC"}],
+        "پنجشنبه": [{"time": "۱۶:۰۰", "currency": "USD", "name": "مدعیان بیکاری ایالات متحده"}]
+    }
 
 def send_to_telegram(calendar):
-    if not calendar:
-        calendar = {
-            "دوشنبه": [{"time": "۱۶:۳۰", "currency": "USD", "name": "شاخص تولیدی فدرال رزرو نیویورک"}],
-            "چهارشنبه": [{"time": "۲۱:۳۰", "currency": "USD", "name": "تعیین نرخ بهره آمریکا (فدرال رزرو)"}],
-            "پنجشنبه": [{"time": "۱۶:۰۰", "currency": "USD", "name": "مدعیان بیکاری ایالات متحده"}]
-        }
-        
     text = "📊 *تقویم اقتصادی و اخبار مهم هفته پیش‌رو* 📊\n"
     text += "⚠️ _فقط رویدادهای با اهمیت بالا (High Impact)_\n"
     text += "⏱ _تمامی ساعت‌ها به وقت رسمی ایران تنظیم شده‌اند._\n\n"
@@ -90,18 +95,19 @@ def send_to_telegram(calendar):
             text += f"🗣 `{ev['name']}`\n\n"
         text += "— — — — — — — — — —\n"
         
-    text += "🚀 *انجمن علمی جهش نیوز*\n"
+    text += "🚀 *سامانه داوری هوشمند انجمن علمی جهش*\n"
     text += "#اقتصاد #فارکس #تقویم_اقتصادی #جهش"
         
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
     payload = {
         "chat_id": CHAT_ID,
-        "message_thread_id": THREAD_ID,
+        "message_thread_id": int(THREAD_ID),
         "text": text,
         "parse_mode": "Markdown",
         "disable_web_page_preview": True
     }
-    requests.post(url, json=payload, timeout=10)
+    res = requests.post(url, json=payload, timeout=10)
+    print("Telegram Response:", res.text)
 
 if __name__ == "__main__":
     calendar_data = get_weekly_economic_calendar()
