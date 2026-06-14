@@ -3,9 +3,7 @@ import datetime
 import requests
 
 TOKEN = os.getenv("TELEGRAM_TOKEN")
-# آیدی اصلاح شده چت گروه طبق تصویر لینک تلگرام شما
 CHAT_ID = "-1001594953973"
-# آیدی تاپیک دقیقاً همان ۶۰۹
 THREAD_ID = 609
 
 def to_persian_digits(n):
@@ -85,19 +83,20 @@ def get_weekly_economic_calendar():
         return get_mock_data()
 
 def send_to_telegram(calendar):
-    text = "📊 *تقویم اقتصادی و اخبار مهم هفته پیش‌رو* 📊\n"
-    text += "⚠️ _فقط رویدادهای با اهمیت بالا (High Impact)_\n"
-    text += "⏱ _تمامی ساعت‌ها به وقت رسمی ایران تنظیم شده‌اند._\n\n"
+    # تغییر فرمت به HTML برای پایداری و امنیت بیشتر در تاپیک‌ها
+    text = "<b>📊 تقویم اقتصادی و اخبار مهم هفته پیش‌رو 📊</b>\n"
+    text += "⚠️ <i>فقط رویدادهای با اهمیت بالا (High Impact)</i>\n"
+    text += "⏱ <i>تمامی ساعت‌ها به وقت رسمی ایران تنظیم شده‌اند.</i>\n\n"
     
     for day, events in calendar.items():
-        text += f"📅 *{day}*\n"
+        text += f"📅 <b>{day}</b>\n"
         events_sorted = sorted(events, key=lambda x: x['time'])
         for ev in events_sorted:
-            text += f"🔹 ساعت {to_persian_digits(ev['time'])} | *{ev['currency']}*\n"
-            text += f"🗣 `{ev['name']}`\n\n"
-        text += "— — — — — — — — — —\n"
+            text += f"🔹 ساعت {to_persian_digits(ev['time'])} | <b>{ev['currency']}</b>\n"
+            text += f"🗣 <code>{ev['name']}</code>\n\n"
+        text += "▫️▫️▫️▫️▫️▫️▫️▫️▫️▫️\n"
         
-    text += "🚀 *انجمن علمی جهش*\n"
+    text += "🚀 <b>انجمن علمی جهش</b>\n"
     text += "#اقتصاد #فارکس #تقویم_اقتصادی #جهش"
         
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
@@ -105,7 +104,7 @@ def send_to_telegram(calendar):
         "chat_id": str(CHAT_ID),
         "message_thread_id": int(THREAD_ID),
         "text": text,
-        "parse_mode": "Markdown",
+        "parse_mode": "HTML",
         "disable_web_page_preview": True
     }
     
