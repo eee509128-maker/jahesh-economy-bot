@@ -3,7 +3,9 @@ import datetime
 import requests
 
 TOKEN = os.getenv("TELEGRAM_TOKEN")
-CHAT_ID = "-1001594953973"
+# آیدی دقیق گروه شما (با منفی صد ابتدایی)
+CHAT_ID = "-1003594953973"
+# آیدی دقیق تاپیک شما
 THREAD_ID = 609
 
 def to_persian_digits(n):
@@ -83,7 +85,6 @@ def get_weekly_economic_calendar():
         return get_mock_data()
 
 def send_to_telegram(calendar):
-    # تغییر فرمت به HTML برای پایداری و امنیت بیشتر در تاپیک‌ها
     text = "<b>📊 تقویم اقتصادی و اخبار مهم هفته پیش‌رو 📊</b>\n"
     text += "⚠️ <i>فقط رویدادهای با اهمیت بالا (High Impact)</i>\n"
     text += "⏱ <i>تمامی ساعت‌ها به وقت رسمی ایران تنظیم شده‌اند.</i>\n\n"
